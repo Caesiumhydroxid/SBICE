@@ -1,0 +1,8 @@
+R2 in 1 1k
+R1 1 2 100k
+R2 2 3 100k
+C1 2 out 3.3n
+C2 3 0 3.3n
+R3 min 0 100k
+R4 min out 150k
+O1 3 min out 0

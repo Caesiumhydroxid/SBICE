@@ -1,0 +1,7 @@
+V1 0 in AC 1
+R3 in 1 1.484k
+R1 1 2 100k
+R2 2 3 100k
+C1 2 out 3.3n
+C2 3 0 3.3n
+O1 3 out out 0 1e5
