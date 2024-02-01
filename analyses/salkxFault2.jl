@@ -8,7 +8,7 @@ include("../probabilistic.jl")
 
 tolerances = parseToleranceFile("measurements/sallenkeyExt/sallenkeyx.tol")
 measuredNodes = ["1","2","3","out"]
-measurementData = readMeasurementDataAC(["measurements/sallenkeyFault/SALB_01.CSV","measurements/sallenkeyFault/SALB_02.CSV","measurements/sallenkeyFault/SALB_03.CSV","measurements/sallenkeyFault/SALBOU01.CSV"], measuredNodes, 1e4)
+measurementData = readMeasurementDataAC(["measurements/sallenkeyFault2/SALB_01.CSV","measurements/sallenkeyFault2/SALB_02.CSV","measurements/sallenkeyFault2/SALB_03.CSV","measurements/sallenkeyFault2/SALB_O01.CSV"], measuredNodes, 1e4)
 measurementData = measurementData[begin:5:end,:]
 plot(measurementData[!,"f"] ,abs.(measurementData[!,"out"]),xscale=:log10,yscale=:log10,label="ϕ₃")
 plot!(measurementData[!,"f"],abs.(measurementData[!,"2"]),xscale=:log10,yscale=:log10,label="ϕ₂")
@@ -75,12 +75,12 @@ chn = sample(model,
 test = chn[:,[Symbol("elementsR[\"R1\"].R"),Symbol("elementsR[\"C1\"].C"),Symbol("elementsR[\"R3\"].R")],:]
 plot(chn)
 using Serialization
-f = open("measurements/sallenkeyFault/fault.jls", "w")
+f = open("measurements/sallenkeyFault/fault2.jls", "w")
 serialize(f,chn)
 close(f)
 
-plot(vec(chn[Symbol("faultyElement[\"R1\"]")].data))
-
+plot(chn)
+savefig("test.png")
 using PairPlots
 using CairoMakie
 chn2 = sample(acanalysis(elements,nodes,frequencies,amountOfMeasurements, amountOfMeasurementLocations, measurementMatrix,observedNodeIndices, measurementErrors), Turing.Prior(), 10_000)

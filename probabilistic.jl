@@ -245,6 +245,55 @@ end
 end
 
 
+@model function acanalysiswithfaultopen(elements, nodes, frequencies::Vector{Float64},amountOfMeasurements::Integer, amountOfMeasurementLocations::Integer, measurementMatrix, observedNodeIndices::Vector{Integer}, measurementErrors, ::Type{T} = ComplexF64) where {T}
+    elementsR = deepcopy(elements)
+    type = Nothing
+    faultyElement = Dict{String,Int}()
+    #shortOrOpen = Dict{String,Int}()
+    for e in keys(tolerances)
+        faultyElement[e] ~ Bernoulli(0.01)
+        if e[1] == 'R'
+            elementsR[e].R = missing
+            if(faultyElement[e] == 1)
+                elementsR[e].R ~ Normal(elements[e].R, elements[e].R * tolerances[e]) 
+                elementsR[e] = Resistor(1e8,elements[e].terminals,elements[e].name)
+            else
+               elementsR[e].R ~ Normal(elements[e].R, elements[e].R * tolerances[e]) 
+               elementsR[e].R *= ComplexF64(1)
+               type = typeof(elementsR[e].R)
+            end
+        end
+        if e[1] == 'C'
+            elementsR[e].C = missing
+            if(faultyElement[e]==1)
+                elementsR[e].C ~ Normal(elements[e].C*1e9, elements[e].C *1e9 * tolerances[e]) 
+                elementsR[e] = Resistor(1e8,elements[e].terminals,elements[e].name)
+            else
+                elementsR[e].C ~ Normal(elements[e].C*1e9, elements[e].C *1e9 * tolerances[e]) 
+                elementsR[e].C *= ComplexF64(1e-9)
+                type = typeof(elementsR[e].C)
+            end
+            
+        end
+    end
+
+    results = zeros(type,amountOfMeasurements,amountOfMeasurementLocations)
+    for (x,f) in enumerate(frequencies)
+        A,RHS = assembleMatrixAndRhs(elementsR,nodes,type,f)
+        res = A\RHS
+        results[x,:] = res[observedNodeIndices] 
+    end
+
+    if measurementMatrix === missing
+        measurementMatrix = zeros(type,amountOfMeasurements,amountOfMeasurementLocations)
+    end
+    for (i,col) in enumerate(eachcol(results))
+        measurementMatrix[:,i] ~ MvNormal(20 .*log10.(abs.(col)), diagm(measurementErrors[i]*ones(length(col))))
+    end
+    return frequencies,20 .*log10.(abs.(results)),measurementMatrix,elementsR
+end
+
+
 @model function dcanalysisnonlinear(elements, nodes, voltages::Vector{Float64},amountOfMeasurements::Integer, observedNodeIndicesLength::Integer, measurementMatrix::Matrix{Float64}, observedNodeIndices::Vector{Integer}, ::Type{T} = Float64) where {T}
     
     elementsR = deepcopy(elements)
